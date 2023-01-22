@@ -10,17 +10,20 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({default: ''})
   name: string;
 
-  @Column()
+  @Column({unique: true})
   email: string;
 
   @Column()
-  register: Date;
+  password: string;
 
   @Column()
-  lastVisit: Date;
+  register?: Date;
+
+  @Column()
+  lastVisit?: Date;
 
   @Column({
     type: 'enum',

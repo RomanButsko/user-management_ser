@@ -1,26 +1,54 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotAcceptableException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { User, UserStatus } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  constructor(@InjectRepository(User) private userRepository: Repository<User>) {};
+
+  async create(createUserDto: CreateUserDto) {
+    const user = await this.userRepository.findOneBy({email: createUserDto.email})
+    if (user) {
+      throw new HttpException(
+        'Пользователь уже зарегестрирован',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    createUserDto.register = createUserDto.lastVisit = new Date();
+    return this.userRepository.create(createUserDto)
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll() {
+    return await this.userRepository.find({
+      order: {
+        'id': 'ASC'
+      }
+    })
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async remove(id: number) {
+    return await this.userRepository.delete(id)
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async updateStatusBlock(id: number) {
+    const user = await this.userRepository.findOneBy({id});
+
+    if (!user) throw new NotAcceptableException('Пользователя не существует');
+
+    let newValue = user.status === UserStatus.UNBLOCK ? UserStatus.BLOCK : UserStatus.BLOCK;
+    await this.userRepository.update(id, {status: newValue});
+    return user;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async updateStatusUnBlock(id: number) {
+    const user = await this.userRepository.findOneBy({id});
+
+    if (!user) throw new NotAcceptableException('Пользователя не существует');
+    
+    let newValue = user.status === UserStatus.BLOCK ? UserStatus.UNBLOCK : UserStatus.UNBLOCK;
+    await this.userRepository.update(id, {status: newValue});
+    return user;
   }
 }
