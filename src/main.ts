@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
-const PORT = 'https://user-managment.onrender.com';
+const PORT = '1024';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
